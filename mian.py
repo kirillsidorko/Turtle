@@ -9,58 +9,53 @@ def move_to_point(x, y):
 def draw_line(x1, y1, x2, y2, color):
     turtle.pencolor(color)
     move_to_point(x1, y1)
-    turtle.pendown()
     turtle.goto(x2, y2)
 
-def draw_group_separator():
-    turtle.penup()
-    turtle.goto(0, 0)
-    turtle.pendown()
-
 def calculate_distance(x1, y1, x2, y2):
-    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+    return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
 def main():
-    turtle.speed(0)  
-    turtle.setup(width=450, height=450)  
+    turtle.speed(0)
+    turtle.setup(width=450, height=450)
 
     file_name = input("Enter the name of the input file: ")
-
     total_distance = 0
+    prev_point = None
+    first_point = True
+    current_color = "black"
 
     try:
         with open(file_name, 'r') as file:
-            current_color = "black"
-            prev_point = None
             for line in file:
                 line = line.strip()
                 if line == "stop":
                     turtle.penup()
                     prev_point = None
+                    first_point = True
                     continue
 
-                command, *args = line.split()
-                if command == 'line':
-                    x1, y1, x2, y2 = map(float, args)
-                    draw_line(x1, y1, x2, y2, current_color)
-                    if prev_point is not None:
-                        total_distance += calculate_distance(x1, y1, prev_point[0], prev_point[1])
-                    prev_point = (x2, y2)
-                elif command == 'color':
-                    current_color = args[0]
-                elif command == 'move':
-                    x, y = map(float, args)
+                parts = line.split()
+                if len(parts) < 3:  
+                    print(f"Skipping malformed line: {line}")
+                    continue
+
+                color, x, y = parts[0], int(parts[1]), int(parts[2])
+
+                if first_point:
                     move_to_point(x, y)
-                    prev_point = (x, y)
+                    first_point = False
                 else:
-                    print(f"Unknown command: {command}")
+                    if prev_point is not None:
+                        total_distance += calculate_distance(prev_point[0], prev_point[1], x, y)
+                    draw_line(prev_point[0], prev_point[1], x, y, color)
+
+                prev_point = (x, y)
+                current_color = color
 
     except FileNotFoundError:
         print(f"File not found: {file_name}")
     except Exception as e:
         print(f"An error occurred: {e}")
-    finally:
-        file.close()
 
     turtle.penup()
     turtle.goto(200, -200)
